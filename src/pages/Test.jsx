@@ -11,7 +11,7 @@ export default function Test() {
   const [chosen, setChosen] = useState(null);
   const [status, setStatus] = useState(null); // 'correct', 'wrong'
   const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(120); // Загальний таймер, наприклад 120 сек
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [animationKey, setAnimationKey] = useState(0);
   const timerId = useRef(null);
 
@@ -32,23 +32,17 @@ export default function Test() {
       clearInterval(timerId.current);
       return;
     }
-
-    setTimeLeft(120); // Скидаємо загальний таймер на 120 сек (2 хв)
-
+  
+    setElapsedTime(0); // Скидаємо при старті
+  
     clearInterval(timerId.current);
     timerId.current = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(timerId.current);
-          setFinished(true); // Завершуємо тест коли час вийшов
-          return 0;
-        }
-        return t - 1;
-      });
+      setElapsedTime((prev) => prev + 1);
     }, 1000);
-
+  
     return () => clearInterval(timerId.current);
   }, [selected, finished]);
+  
 
   const resetTest = () => {
     setCurrentIndex(0);
@@ -57,7 +51,7 @@ export default function Test() {
     setChosen(null);
     setStatus(null);
     setShowCorrectAnswers(false);
-    setTimeLeft(120);
+    setElapsedTime(0);
   };
 
   const shuffleArray = (arr) => {
@@ -133,14 +127,21 @@ export default function Test() {
   };
 
   return (
-    <div style={{ padding: '1rem', maxWidth: '600px', margin: 'auto' }}>
-      <h2>🧪 Тестування</h2>
+    <div style={{ padding: '1rem', maxWidth: '600px', margin: 'auto' }}>  
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+  <h2 style={{ margin: 0 }}>🧪 Тестування</h2>
+  {selected && (
+    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#333' }}>
+      {formatTime(elapsedTime)}
+    </div>
+  )}
+</div>
 
-      {/* Прогрес-бар */}
+        {/* Прогрес-бар */}
       {selected && (
         <div style={progressContainer}>
           <div style={{ ...progressBar, width: `${progressPercent}%` }} />
-          <div style={timerStyle}>{formatTime(timeLeft)}</div>
+          
         </div>
       )}
 
@@ -262,14 +263,4 @@ const progressBar = {
   height: '100%',
   backgroundColor: '#007bff',
   transition: 'width 0.4s ease',
-};
-
-const timerStyle = {
-  position: 'absolute',
-  right: '10px',
-  top: '50%',
-  transform: 'translateY(-50%)',
-  fontWeight: 'bold',
-  color: '#333',
-  userSelect: 'none',
 };
