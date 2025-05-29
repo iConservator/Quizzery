@@ -105,9 +105,9 @@ export default function AddTests() {
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
         <select onChange={e => setCollectionName(e.target.value)} value={collectionName}>
           <option value="">-- Виберіть --</option>
-          {Object.keys(collections).map(name => (
-            <option key={name} value={name}>{name}</option>
-          ))}
+          {collections.map(col => (
+  <option key={col.name} value={col.name}>{col.name}</option>
+))}
         </select>
 
         <input

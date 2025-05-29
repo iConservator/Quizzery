@@ -18,11 +18,14 @@ export default function Test() {
 
   // Ініціалізація тесту при виборі колекції
   useEffect(() => {
-    if (selected && collections[selected]) {
-      const copy = [...collections[selected]];
-      shuffleArray(copy);
-      setShuffledTests(copy);
-      resetTest();
+    if (selected) {
+      const found = collections.find(c => c.name === selected);
+      if (found) {
+        const copy = [...found.tests];
+        shuffleArray(copy);
+        setShuffledTests(copy);
+        resetTest();
+      }
     }
   }, [selected]);
 
@@ -30,7 +33,7 @@ export default function Test() {
   useEffect(() => {
     if (!selected || finished) {
       clearInterval(timerId.current);
-      return;
+      return; 
     }
   
     setElapsedTime(0); // Скидаємо при старті
@@ -150,11 +153,9 @@ export default function Test() {
           <label>Оберіть колекцію:</label>
           <select onChange={(e) => setSelected(e.target.value)} value={selected}>
             <option value="">-- Виберіть --</option>
-            {Object.keys(collections).map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
+            {collections.map((col) => (
+  <option key={col.name} value={col.name}>{col.name}</option>
+))}
           </select>
         </div>
       )}
