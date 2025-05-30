@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useTestContext } from "../context/TestContext";
 import { HiPencil, HiCheck } from "react-icons/hi";
-import { RiImportFill } from "react-icons/ri";
-import { FaEye, FaEyeSlash, FaFileExport, FaFileImport } from "react-icons/fa";
+import { RiExportFill } from "react-icons/ri";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdDeleteOutline, MdDelete } from "react-icons/md";
 import { useLocation } from "react-router-dom";
-
+import { exportCollections } from "../utils/exportCollection";
 
 export default function Learn() {
   const { collections, setCollections, deleteTest } = useTestContext();
@@ -31,8 +31,6 @@ export default function Learn() {
     backgroundColor: "#E7E7E8",
     transition: "background-color 0.3s, border-color 0.3s",
   };
-
-  
 
   const currentCollection = collections.find((c) => c.name === selected);
   const currentTests = currentCollection?.tests || [];
@@ -150,7 +148,18 @@ export default function Learn() {
 
       <h2>Навчання</h2>
 
-    
+      <button onClick={() => exportCollections(currentCollection)} style={editBtn}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <RiExportFill style={{ marginRight: "0.5rem" }} size={18} />
+          <span>Експортувати</span>
+        </div>
+      </button>
 
       {selected && currentTests.length > 0 && (
         <div style={{ marginTop: "2rem" }}>

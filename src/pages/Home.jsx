@@ -132,21 +132,6 @@ export default function Home() {
           </div>
         </ImportButton>
 
-        <button
-          onClick={() => exportCollections()}
-          style={editBtn}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <RiExportFill style={{ marginRight: "0.5rem" }} size={18} />
-            <span>Експортувати</span>
-          </div>
-        </button>
       </div>
 
       <div
