@@ -2,16 +2,92 @@ import { useNavigate } from "react-router-dom";
 import { useTestContext } from "../context/TestContext";
 import { MdDelete } from "react-icons/md";
 import { FaNoteSticky } from "react-icons/fa6";
-import { HiPencil, HiCheck } from "react-icons/hi";
 import { FaInfoCircle } from "react-icons/fa";
 import { BiSolidMessageSquareEdit } from "react-icons/bi";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import { RiExportFill, RiImportFill } from "react-icons/ri";
+import { exportCollections } from "../utils/exportCollection";
+import { FaEye, FaEyeSlash, FaFileExport, FaFileImport } from "react-icons/fa";
 import "react-circular-progressbar/dist/styles.css";
+import { useRef } from "react";
 
 export default function Home() {
   const { collections, getSession } = useTestContext();
   const { deleteCollection } = useTestContext();
   const navigate = useNavigate();
+
+  const editBtn = {
+    display: "block",
+    width: "100%",
+    textAlign: "center",
+    padding: "0.7rem 1rem",
+    marginBottom: "0.5rem",
+    marginTop: "0.7rem",
+    fontSize: "1rem",
+    borderRadius: "6px",
+    border: "1px solid #E7E7E8",
+    cursor: "pointer",
+    backgroundColor: "#E7E7E8",
+    transition: "background-color 0.3s, border-color 0.3s",
+  };
+
+  const ImportButton = ({ style: editBtn }) => {
+    const { setCollections } = useTestContext();
+    const fileInputRef = useRef();
+
+    const handleImport = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          let imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) {
+            imported = [imported];
+          }
+
+          setCollections((prev) => [...prev, ...imported]);
+          console.log("✅ Імпортовано колекції:", imported);
+        } catch (error) {
+          alert("❌ Помилка імпорту: невірний формат JSON");
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    return (
+      <>
+        <label style={{ display: "inline-block" }}>
+          <button
+            style={editBtn}
+            onClick={(e) => {
+              e.preventDefault();
+              fileInputRef.current.click();
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <RiImportFill style={{ marginRight: "0.5rem" }} size={18} />
+              <span>Імпортувати</span>
+            </div>
+          </button>
+          <input
+            type="file"
+            accept=".json"
+            ref={fileInputRef}
+            onChange={handleImport}
+            style={{ display: "none" }}
+          />
+        </label>
+      </>
+    );
+  };
 
   const handleDeleteCollection = (name) => {
     if (window.confirm(`Видалити колекцію "${name}"? Це не можна скасувати.`)) {
@@ -34,6 +110,48 @@ export default function Home() {
       <div
         style={{
           display: "flex",
+          gap: "1rem",
+          marginTop: "1rem",
+          marginLeft: "0.2rem",
+          marginRight: "0.2rem",
+        }}
+      >
+        <ImportButton
+          // onClick={() => )}
+          style={editBtn}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <RiImportFill style={{ marginRight: "0.5rem" }} size={18} />
+            <span>Імпортувати</span>
+          </div>
+        </ImportButton>
+
+        <button
+          onClick={() => exportCollections()}
+          style={editBtn}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <RiExportFill style={{ marginRight: "0.5rem" }} size={18} />
+            <span>Експортувати</span>
+          </div>
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
           flexWrap: "wrap",
           gap: "1rem",
           width: "100%",
@@ -43,7 +161,9 @@ export default function Home() {
           const session = getSession(col.name);
 
           const progress = session
-            ? Math.floor((session.currentIndex / session.shuffledTests.length) * 100)
+            ? Math.floor(
+                (session.currentIndex / session.shuffledTests.length) * 100
+              )
             : null;
 
           return (
@@ -96,7 +216,6 @@ export default function Home() {
                     size={18}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteCollection(col.name);
                     }}
                   />
                   <FaNoteSticky

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useTestContext } from "../context/TestContext";
 import { HiPencil, HiCheck } from "react-icons/hi";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { RiImportFill } from "react-icons/ri";
+import { FaEye, FaEyeSlash, FaFileExport, FaFileImport } from "react-icons/fa";
 import { MdDeleteOutline, MdDelete } from "react-icons/md";
 import { useLocation } from "react-router-dom";
+
 
 export default function Learn() {
   const { collections, setCollections, deleteTest } = useTestContext();
@@ -29,6 +31,8 @@ export default function Learn() {
     backgroundColor: "#E7E7E8",
     transition: "background-color 0.3s, border-color 0.3s",
   };
+
+  
 
   const currentCollection = collections.find((c) => c.name === selected);
   const currentTests = currentCollection?.tests || [];
@@ -146,22 +150,7 @@ export default function Learn() {
 
       <h2>Навчання</h2>
 
-      <label>Оберіть колекцію:</label>
-      <select
-        onChange={(e) => {
-          setSelected(e.target.value);
-          setShowAnswerIndexes([]);
-          setEditIndex(null);
-        }}
-        value={selected}
-      >
-        <option value="">-- Виберіть --</option>
-        {collections.map((col) => (
-          <option key={col.name} value={col.name}>
-            {col.name}
-          </option>
-        ))}
-      </select>
+    
 
       {selected && currentTests.length > 0 && (
         <div style={{ marginTop: "2rem" }}>
@@ -290,7 +279,8 @@ export default function Learn() {
                     >
                       <HiCheck style={{ marginRight: "0.5rem" }} size={18} />
                       <span style={{ fontSize: "1rem", marginRight: "0.5rem" }}>
-                      Застосувати зміни</span>
+                        Застосувати зміни
+                      </span>
                     </div>
                   </button>
                 </>
