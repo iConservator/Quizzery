@@ -212,6 +212,7 @@ export default function Learn() {
                           display: "flex",
                           alignItems: "center",
                           borderRadius: "6px",
+                          border: "1px solid #ccc",
                           padding: "0.9rem 1rem",
                           backgroundColor:
                             q.correctIndex === j ? "#d4edda" : "#f9f9f9",
@@ -301,6 +302,8 @@ export default function Learn() {
                       alignItems: "center",
                       gap: "1.45rem",
                       marginBottom: "1.2rem",
+                      justifyContent: "space-between",
+                      
                     }}
                   >
                     <strong>
@@ -337,7 +340,8 @@ export default function Learn() {
                               ? "#d4edda"
                               : "#f0f0f0",
                           padding: "0.8rem",
-                          borderRadius: "4px",
+                          borderRadius: "6px",
+                          border: "1px solid #ccc",
                         }}
                       >
                         <strong>{a.label}.</strong> {a.text}
