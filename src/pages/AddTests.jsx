@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { parseTestText, parsePastedText } from "../utils/parseTestText";
+import { parseTestText } from "../utils/parseTestText";
 import { useTestContext } from "../context/TestContext";
 import { HiPencil, HiCheck } from "react-icons/hi";
 
