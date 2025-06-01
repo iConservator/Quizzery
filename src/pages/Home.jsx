@@ -140,6 +140,7 @@ export default function Home() {
           flexWrap: "wrap",
           gap: "1rem",
           width: "100%",
+          animation: "fadeIn 0.4s ease-in-out forwards",
         }}
       >
         {collections.map((col, i) => {

@@ -7,10 +7,13 @@ import { MdDeleteOutline, MdDelete } from "react-icons/md";
 import { useLocation } from "react-router-dom";
 import { exportCollections } from "../utils/exportCollection";
 
+
+
 export default function Learn() {
+  
   const { collections, setCollections, deleteTest } = useTestContext();
   const location = useLocation();
-  const [selected, setSelected] = useState(
+  const [selected] = useState(
     location.state?.selectedCategory || ""
   );
   const [showAnswerIndexes, setShowAnswerIndexes] = useState([]);

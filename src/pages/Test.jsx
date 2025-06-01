@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useTestContext } from "../context/TestContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Test({ collectionName }) {
+  const navigate = useNavigate();
+
   const { collections, getSession, startSession, updateSession, clearSession } =
     useTestContext();
   const [shuffledTests, setShuffledTests] = useState([]);
@@ -102,14 +104,14 @@ export default function Test({ collectionName }) {
 
   useEffect(() => {
     if (finished || shuffledTests.length === 0) return;
-  
+
     timerId.current = setInterval(() => {
       setElapsedTime((prev) => prev + 1);
     }, 1000);
-  
+
     return () => clearInterval(timerId.current);
   }, [finished, shuffledTests.length]);
-  
+
   const resetTest = () => {
     if (!selected) return;
 
@@ -134,16 +136,16 @@ export default function Test({ collectionName }) {
 
   const handleClick = (idx) => {
     if (chosen !== null && status === "correct") return;
-  
+
     const correct = shuffledTests[currentIndex].correctIndex;
     const next = currentIndex + 1;
-  
+
     if (idx === correct) {
       setStatus("correct");
       setScore((prev) => prev + 1);
       setChosen(idx);
       setAnimationKey((prev) => prev + 1);
-  
+
       setTimeout(() => {
         if (next < shuffledTests.length) {
           setCurrentIndex(next);
@@ -155,7 +157,7 @@ export default function Test({ collectionName }) {
           setChosen(null);
           setStatus(null);
           setAnimationKey((prev) => prev + 1);
-          clearSession(selected);  // видаляємо сесію тут, після завершення
+          clearSession(selected); // видаляємо сесію тут, після завершення
         }
       }, 1000);
     } else {
@@ -296,6 +298,42 @@ export default function Test({ collectionName }) {
           )}
         </div>
       )}
+
+      <button
+        style={{
+          display: "block",
+          width: "100%",
+          textAlign: "center",
+          padding: "0.7rem 1rem",
+          marginBottom: "0.5rem",
+          color: "white",
+          marginTop: "1.2rem",
+          fontSize: "1rem",
+          borderRadius: "6px",
+          borderColor: "#dc3545",
+          border: "1px solid #8D909B",
+          cursor: "pointer",
+          backgroundColor: "#8D909B",
+          transition: "background-color 0.3s, border-color 0.3s",
+          opacity: 0,
+          animation: "fadeIn 0.4s ease-in-out forwards",
+        }}
+        disabled={finished}
+        onClick={() => {
+          clearSession(selected);
+          navigate("/");
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <span>{finished ? "Сесію завершено" : "Завершити сесію"}</span>
+        </div>
+      </button>
     </div>
   );
 }
