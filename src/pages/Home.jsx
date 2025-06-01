@@ -6,10 +6,9 @@ import { FaInfoCircle } from "react-icons/fa";
 import { BiSolidMessageSquareEdit } from "react-icons/bi";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import { RiExportFill, RiImportFill } from "react-icons/ri";
-import { exportCollections } from "../utils/exportCollection";
-import { FaEye, FaEyeSlash, FaFileExport, FaFileImport } from "react-icons/fa";
 import "react-circular-progressbar/dist/styles.css";
 import { useRef } from "react";
+import { ExportAllButton } from "../utils/exportAllCollections";
 
 export default function Home() {
   const { collections, getSession } = useTestContext();
@@ -111,26 +110,23 @@ export default function Home() {
         style={{
           display: "flex",
           gap: "1rem",
-          marginTop: "1rem",
-          marginLeft: "0.2rem",
-          marginRight: "0.2rem",
+          marginBottom: "1.0rem",
+     
         }}
       >
         <ImportButton
           // onClick={() => )}
           style={editBtn}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <RiImportFill style={{ marginRight: "0.5rem" }} size={18} />
-            <span>Імпортувати</span>
-          </div>
+       
         </ImportButton>
+
+        <ExportAllButton
+          // onClick={() => )}
+          style={editBtn}
+        >
+      
+        </ExportAllButton>
 
       </div>
 
