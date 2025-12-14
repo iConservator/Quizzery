@@ -144,7 +144,7 @@ export default function AddTests() {
       ></textarea>
 
       <button onClick={handleParse} style={{ marginTop: "1rem" }}>
-        Розібрати
+        Запарсити
       </button>
 
       {parsedTests.length > 0 && (
