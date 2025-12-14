@@ -3,8 +3,8 @@ export function parseTestText(text) {
   const lines = text.split("\n").map(line => line.trim()).filter(Boolean);
 
   let currentQuestion = null;
-  let waitingForAnswers = false;  // Чи чекаємо на рядки з варіантами відповідей після "A. B. C. D. E."
-  
+  let waitingForAnswers = false;
+
   const flushQuestion = () => {
     if (currentQuestion) {
       questions.push(currentQuestion);
@@ -16,51 +16,78 @@ export function parseTestText(text) {
   const answerLettersPattern = /^(?:[A-E]\.\s*){2,5}/i;
   const answerLabels = ["A", "B", "C", "D", "E"];
 
-  // Оновлена функція розбиття рядка з кількома відповідями, доповнює порожні відповіді наступним рядком
+  // =========================
+  // ⭐ НОРМАЛІЗАЦІЯ ВІДПОВІДІ
+  // =========================
+  function normalizeAnswer(rawText) {
+    let text = rawText.trim();
+    let isCorrect = false;
+
+    // *A. Відповідь
+    if (/^\*[A-E][).]/i.test(text)) {
+      isCorrect = true;
+      text = text.replace(/^\*[A-E][).]\s*/i, "");
+    }
+
+    // A. *Відповідь
+    if (/^\*/.test(text)) {
+      isCorrect = true;
+      text = text.replace(/^\*\s*/, "");
+    }
+
+    return { text, isCorrect };
+  }
+
+  // ============================================
+  // РОЗБИТТЯ РЯДКА З КІЛЬКОМА ВАРІАНТАМИ
+  // ============================================
   function splitAnswersInLine(line, nextLinesIterator) {
-    const regex = /([A-E])[).]\s*/g;
+    const regex = /(\*?[A-E])[).]\s*/g;
     const answers = [];
     let match;
-    let lastIndex = 0;
 
-    // Знаходимо усі позначки відповіді (A., B. і т.п.)
     const positions = [];
     while ((match = regex.exec(line)) !== null) {
-      positions.push({ label: match[1], index: match.index });
+      positions.push({
+        label: match[1].replace("*", "").toUpperCase(),
+        hasStar: match[1].startsWith("*"),
+        index: match.index
+      });
     }
-    positions.push({ index: line.length }); // для кінця останнього тексту
+    positions.push({ index: line.length });
 
-    // Вирізаємо текст між відповідями
     for (let i = 0; i < positions.length - 1; i++) {
-      const label = positions[i].label;
-      const start = positions[i].index + 2; // після "A." або "B."
+      const { label, hasStar, index } = positions[i];
+      const start = index + 2;
       const end = positions[i + 1].index;
-      let text = line.slice(start, end).trim();
 
-      // Якщо текст відповіді порожній — беремо наступний рядок з ітератора (якщо є)
+      let text = line.slice(start, end).trim();
+      let isCorrect = hasStar;
+
       if (!text && nextLinesIterator) {
         const nextLine = nextLinesIterator();
-        if (nextLine) {
-          text = nextLine.trim();
-        }
+        if (nextLine) text = nextLine.trim();
       }
 
-      answers.push({ label, text });
+      if (text.startsWith("*")) {
+        isCorrect = true;
+        text = text.replace(/^\*\s*/, "");
+      }
+
+      answers.push({ label, text, isCorrect });
     }
+
     return answers;
   }
 
-  // Ітератор для читання наступних рядків
   function makeLineIterator(lines, startIndex) {
     let idx = startIndex;
-    return () => {
-      if (idx < lines.length) {
-        return lines[idx++];
-      }
-      return null;
-    };
+    return () => (idx < lines.length ? lines[idx++] : null);
   }
 
+  // =========================
+  // ОСНОВНИЙ ПАРСИНГ
+  // =========================
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
@@ -70,57 +97,45 @@ export function parseTestText(text) {
 
       let rawText = matchQuestion[2];
 
+      currentQuestion = {
+        number: matchQuestion[1],
+        question: rawText,
+        answers: [],
+        correctIndex: null
+      };
+
       if (answerLettersPattern.test(rawText)) {
-        rawText = rawText.replace(answerLettersPattern, "").trim();
-
-        currentQuestion = {
-          number: matchQuestion[1],
-          question: rawText,
-          answers: [],
-          correctIndex: null,
-        };
-
+        currentQuestion.question = rawText.replace(answerLettersPattern, "").trim();
         waitingForAnswers = true;
-        continue;
       } else {
-        currentQuestion = {
-          number: matchQuestion[1],
-          question: rawText,
-          answers: [],
-          correctIndex: null,
-        };
         waitingForAnswers = false;
-        continue;
-      }
-    }
-
-    if (waitingForAnswers && currentQuestion) {
-      const label = answerLabels[currentQuestion.answers.length];
-      if (label) {
-        currentQuestion.answers.push({
-          label,
-          text: line,
-        });
-      } else {
-        currentQuestion.answers.push({
-          label: "?",
-          text: line,
-        });
       }
       continue;
     }
 
-    const matchAnswer = line.match(/^([A-E])[).]?\s*(.+)$/i);
+    // Відповіді без A./B./C. (по рядках)
+    if (waitingForAnswers && currentQuestion) {
+      const label = answerLabels[currentQuestion.answers.length] ?? "?";
+      const normalized = normalizeAnswer(line);
+
+      currentQuestion.answers.push({
+        label,
+        text: normalized.text
+      });
+
+      if (normalized.isCorrect) {
+        currentQuestion.correctIndex = currentQuestion.answers.length - 1;
+      }
+      continue;
+    }
+
+    // Відповіді з A./B./C.
+    const matchAnswer = line.match(/^(\*?[A-E])[).]?\s*(.+)$/i);
     if (matchAnswer && currentQuestion) {
-      // Використовуємо ітератор для наступних рядків після поточного (i+1)
       const nextLinesIterator = makeLineIterator(lines, i + 1);
       const splitted = splitAnswersInLine(line, () => {
-        // отримуємо наступний рядок через ітератор
         const nextLine = nextLinesIterator();
-        // Оскільки ми споживаємо рядки додатково, індекс циклу потрібно синхронізувати
-        if (nextLine !== null) {
-          i++; // рухаємо основний лічильник, бо наступний рядок використано тут
-        }
+        if (nextLine !== null) i++;
         return nextLine;
       });
 
@@ -128,21 +143,33 @@ export function parseTestText(text) {
         for (const ans of splitted) {
           currentQuestion.answers.push({
             label: ans.label,
-            text: ans.text,
+            text: ans.text
           });
+
+          if (ans.isCorrect) {
+            currentQuestion.correctIndex = currentQuestion.answers.length - 1;
+          }
         }
         waitingForAnswers = false;
         continue;
-      } else {
-        currentQuestion.answers.push({
-          label: matchAnswer[1].toUpperCase(),
-          text: matchAnswer[2],
-        });
-        waitingForAnswers = false;
-        continue;
       }
+
+      const normalized = normalizeAnswer(matchAnswer[2]);
+
+      currentQuestion.answers.push({
+        label: matchAnswer[1].replace("*", "").toUpperCase(),
+        text: normalized.text
+      });
+
+      if (normalized.isCorrect || matchAnswer[1].startsWith("*")) {
+        currentQuestion.correctIndex = currentQuestion.answers.length - 1;
+      }
+
+      waitingForAnswers = false;
+      continue;
     }
 
+    // Продовження тексту
     if (currentQuestion) {
       const lastAnswer = currentQuestion.answers.at(-1);
       if (lastAnswer) {
@@ -154,6 +181,5 @@ export function parseTestText(text) {
   }
 
   flushQuestion();
-
   return questions;
 }
