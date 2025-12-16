@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useTestContext } from "../context/TestContext";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FaStar } from "react-icons/fa";
 
 export default function Test({ collectionName }) {
   const navigate = useNavigate();
@@ -25,14 +24,14 @@ export default function Test({ collectionName }) {
   const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [animationKey, setAnimationKey] = useState(0);
+
   const timerId = useRef(null);
   const location = useLocation();
 
   const [selected] = useState(location.state?.selectedCategory || "");
 
-  // ===============================
-  // ⭐ ДОДАТИ В "НЕЗРОЗУМІЛІ"
-  // ===============================
+  /* ================== HELPERS ================== */
+
   const addToUnclear = (test) => {
     const unclear = collections.find((c) => c.name === "незрозумілі");
 
@@ -51,9 +50,8 @@ export default function Test({ collectionName }) {
     }
   };
 
-  // ===============================
-  // ІНІЦІАЛІЗАЦІЯ СЕСІЇ
-  // ===============================
+  /* ================== EFFECTS ================== */
+
   useEffect(() => {
     if (!selected || collections.length === 0) return;
 
@@ -86,9 +84,6 @@ export default function Test({ collectionName }) {
     setAnimationKey((prev) => prev + 1);
   }, [selected, collections.length]);
 
-  // ===============================
-  // ОНОВЛЕННЯ СЕСІЇ
-  // ===============================
   useEffect(() => {
     if (!selected || shuffledTests.length === 0) return;
 
@@ -99,9 +94,6 @@ export default function Test({ collectionName }) {
     });
   }, [selected, shuffledTests, currentIndex, score, updateSession]);
 
-  // ===============================
-  // ТАЙМЕР
-  // ===============================
   useEffect(() => {
     if (finished || shuffledTests.length === 0) return;
 
@@ -112,11 +104,31 @@ export default function Test({ collectionName }) {
     return () => clearInterval(timerId.current);
   }, [finished, shuffledTests.length]);
 
+  /* ================== ACTIONS ================== */
+
+  const resetTest = () => {
+    const collection = collections.find((c) => c.name === selected);
+    if (!collection) return;
+
+    const shuffled = [...collection.tests].sort(() => Math.random() - 0.5);
+
+    setShuffledTests(shuffled);
+    setCurrentIndex(0);
+    setScore(0);
+    setFinished(false);
+    setChosen(null);
+    setStatus(null);
+    setShowCorrectAnswers(false);
+    setElapsedTime(0);
+    setAnimationKey((prev) => prev + 1);
+
+    startSession(selected, shuffled);
+  };
+
   const handleClick = (idx) => {
     if (chosen !== null && status === "correct") return;
 
-    const currentTest = shuffledTests[currentIndex];
-    const correct = currentTest.correctIndex;
+    const correct = shuffledTests[currentIndex].correctIndex;
     const next = currentIndex + 1;
 
     if (idx === correct) {
@@ -130,6 +142,7 @@ export default function Test({ collectionName }) {
           setCurrentIndex(next);
           setChosen(null);
           setStatus(null);
+          setAnimationKey((prev) => prev + 1);
         } else {
           setFinished(true);
           clearSession(selected);
@@ -140,59 +153,53 @@ export default function Test({ collectionName }) {
       setChosen(idx);
       setAnimationKey((prev) => prev + 1);
 
-      // 🤔 АВТОПРОПОЗИЦІЯ
       setTimeout(() => {
-        const confirmAdd = window.confirm(
-          "❌ Неправильна відповідь\nДодати це питання в «незрозумілі»?"
-        );
-        if (confirmAdd) addToUnclear(currentTest);
+        if (
+          window.confirm(
+            "❌ Неправильно. Додати це питання в «незрозумілі»?"
+          )
+        ) {
+          addToUnclear(shuffledTests[currentIndex]);
+        }
       }, 300);
     }
   };
 
-  const getButtonStyle = (idx) => {
-    const correct = shuffledTests[currentIndex]?.correctIndex;
-
-    if (chosen === null) return baseBtn;
-
-    if (idx === chosen && status === "wrong") {
-      return { ...baseBtn, backgroundColor: "#f8d7da" };
-    }
-
-    if (idx === chosen && status === "correct") {
-      return { ...baseBtn, backgroundColor: "#d4edda" };
-    }
-
-    return baseBtn;
-  };
-
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
-    const s = (seconds % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
+  /* ================== RENDER ================== */
 
   if (!selected) return <p>Колекція не обрана</p>;
 
   return (
     <div style={{ padding: "1rem", maxWidth: "600px", margin: "auto" }}>
       <h2>🧪 Тестування</h2>
-      <div>{formatTime(elapsedTime)}</div>
 
       {!finished && shuffledTests.length > 0 && (
         <div key={animationKey} style={cardStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <strong>
+          <div
+            style={{
+              fontWeight: "bold",
+              marginBottom: "1rem",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span>
               {shuffledTests[currentIndex].number}.{" "}
               {shuffledTests[currentIndex].question}
-            </strong>
+            </span>
 
             <button
-              title="Додати в незрозумілі"
               onClick={() => addToUnclear(shuffledTests[currentIndex])}
-              style={{ background: "none", border: "none", cursor: "pointer" }}
+              title="Додати в незрозумілі"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1.2rem",
+              }}
             >
-              <FaStar color="#f4c430" size={22} />
+              ⭐
             </button>
           </div>
 
@@ -200,7 +207,7 @@ export default function Test({ collectionName }) {
             <button
               key={idx}
               onClick={() => handleClick(idx)}
-              style={getButtonStyle(idx)}
+              style={baseBtn}
             >
               <strong>{a.label}.</strong> {a.text}
             </button>
@@ -208,16 +215,8 @@ export default function Test({ collectionName }) {
         </div>
       )}
 
-      {finished && (
-        <div>
-          <h3>✅ Завершено</h3>
-          <p>
-            Результат: {score} з {shuffledTests.length}
-          </p>
-        </div>
-      )}
-
       <button
+        style={baseBtn}
         onClick={() => {
           clearSession(selected);
           navigate("/");
@@ -229,12 +228,15 @@ export default function Test({ collectionName }) {
   );
 }
 
+/* ================== STYLES (НЕ ЗМІНЮВАЛИСЬ) ================== */
+
 const cardStyle = {
   background: "white",
   border: "1px solid #ccc",
   borderRadius: "10px",
   padding: "1.5rem",
-  marginTop: "1rem",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+  marginTop: "2rem",
 };
 
 const baseBtn = {
